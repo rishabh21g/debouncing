@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  const [input, setInput] = useState("");
+  const [results, setResults] = useState([]);
+  const [show, setShow] = useState(false);
+  const [cache , setCache]= useState({})
+  const fetchdata = async () => {
+    if(cache[input]){
+      console.log("Cache Returned" + input)
+      setResults(cache[input])
+      return
+    }
+    console.log("API CALLED" + input)
+    const data = await fetch(`https://dummyjson.com/recipes/search?q=${input}`);
+    const recipesArr = await data.json();
+    
+    setResults(recipesArr?.recipes);
+    setCache((prev)=>{
+      return(
+        {...prev , [input]:recipesArr.recipes}
+      )
+    })
+  };
+  useEffect(() => {
+    const timer = setTimeout(fetchdata, 400);
+    return ()=>{
+      clearTimeout(timer)
+    }
+  }, [input]);
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="container">
+      <h1>Auto search bar...</h1>
+      <input
+        type="text"
+        placeholder="enter your search query"
+        id="text"
+        className="input-box"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onFocus={() => setShow(true)}
+        onBlur={() => setShow(false)}
+      />
+      {show && (
+        <div className="products">
+          {results.map((rp) => {
+            return (
+              <div key={rp.id} className="result">
+                {rp.name}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
